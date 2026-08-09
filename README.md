@@ -97,7 +97,7 @@ directory and edit it there. Defaults work out of the box.
 | Option | Default | Meaning |
 |---|---|---|
 | `ArenaRatingMemory.Enable` | `1` | Master switch |
-| `ArenaRatingMemory.Announce` | `1` | Tell players on login that the module is running |
+| `ArenaRatingMemory.Announce` | `0` | Tell players on login that the module is running |
 
 Setting `ArenaRatingMemory.Enable = 0` makes the module completely inert: it stops recording as well
 as restoring. If you leave it off for a while, players will leave teams unobserved and the stored

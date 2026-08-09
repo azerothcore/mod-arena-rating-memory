@@ -28,8 +28,8 @@ ArenaRatingMemory.Enable = 1
 #
 #    ArenaRatingMemory.Announce
 #        Description: Announce to the player on login that this module is enabled.
-#        Default:     1 - Enabled
-#                     0 - Disabled
+#        Default:     0 - Disabled
+#                     1 - Enabled
 #
 
-ArenaRatingMemory.Announce = 1
+ArenaRatingMemory.Announce = 0

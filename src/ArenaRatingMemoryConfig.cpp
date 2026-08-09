@@ -9,5 +9,5 @@ ArenaRatingMemoryConfig sArenaRatingMemoryConfig;
 void ArenaRatingMemoryConfig::BuildConfigCache()
 {
     SetConfigValue<bool>(ArenaRatingMemoryConfigId::ENABLED, "ArenaRatingMemory.Enable", true);
-    SetConfigValue<bool>(ArenaRatingMemoryConfigId::ANNOUNCE, "ArenaRatingMemory.Announce", true);
+    SetConfigValue<bool>(ArenaRatingMemoryConfigId::ANNOUNCE, "ArenaRatingMemory.Announce", false);
 }
