@@ -39,6 +39,19 @@ joining the same team. With default settings (arena season 6 or later,
 A player with no memory for a team is unaffected — the module does nothing and the core's normal
 behaviour applies.
 
+The memory is symmetric: a rating you dropped comes back with you as well as one you earned. Without
+this module a player can reset a bad personal rating by leaving a team and rejoining it, and that
+door is now closed.
+
+### What is not restored
+
+Only the personal rating. Week and season games and wins still reset when you rejoin, exactly as
+they do without the module.
+
+That matters for arena points: the core only pays them to members who played at least 30% of the
+team's games that week, so leaving and rejoining mid-week can cost you the payout until you have
+played those games back.
+
 ### When memory is forgotten
 
 | Event | Memory |
@@ -86,6 +99,38 @@ directory and edit it there. Defaults work out of the box.
 
 The three `Floor*` options exist so servers that changed what a new arena team member starts with can
 keep the module in sync. Leave them alone unless you did.
+
+Setting `ArenaRatingMemory.Enable = 0` makes the module completely inert: it stops recording as well
+as restoring. If you leave it off for a while, players will leave teams unobserved and the stored
+ratings will go stale. Clear the table before switching it back on:
+
+```sql
+DELETE FROM `mod_arena_rating_memory`;
+```
+
+The next server start repopulates it from everyone currently in a team.
+
+## Commands
+
+Both sit under the core's `.arena` command and only touch this module's table. Neither can change a
+player's live arena rating.
+
+| Command | Level | What it does |
+|---|---|---|
+| `.arena ratingmemory show [player]` | Game Master | Lists every remembered rating for that character, with team id, team name and when it was last updated |
+| `.arena ratingmemory clear [player] [teamId]` | Administrator | Deletes the remembered ratings for that character, or just the one for a given team |
+
+Both default to your current target or yourself when no player is given, and both work from the
+console.
+
+Clearing the memory of a player who is still in the team is temporary: their rating is recorded
+again after their next match. Clearing is meant for teams they have already left.
+
+For tracing a restore as it happens, enable the module's debug log in `worldserver.conf`:
+
+```
+Logger.module.arenaratingmemory=5,Console Server
+```
 
 ## Notes
 

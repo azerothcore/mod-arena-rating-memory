@@ -108,12 +108,21 @@ public:
 
     // A personal rating only ever changes right before a SaveToDB, so mirroring here captures every
     // value a player could later leave the team with. Never blocks the save.
+    //
+    // Reached from a battleground map thread via Arena::EndBattleground, so it must not touch any
+    // module state beyond the database.
     bool CanSaveToDB(ArenaTeam* team) override
     {
-        if (sArenaRatingMemoryConfig.IsEnabled() && IsPersistentTeam(team))
-            for (ArenaTeamMember const& member : team->GetMembers())
-                ArenaRatingMemory::Remember(team->GetId(), member.Guid, member.PersonalRating);
+        if (!sArenaRatingMemoryConfig.IsEnabled() || !IsPersistentTeam(team))
+            return true;
 
+        std::vector<ArenaRatingMemory::MemberRating> members;
+        members.reserve(team->GetMembersSize());
+
+        for (ArenaTeamMember const& member : team->GetMembers())
+            members.push_back({ member.Guid, member.PersonalRating });
+
+        ArenaRatingMemory::RememberTeam(team->GetId(), members);
         return true;
     }
 };

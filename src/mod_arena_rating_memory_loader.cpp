@@ -3,9 +3,11 @@
  */
 
 void AddArenaRatingMemoryScripts();
+void AddArenaRatingMemoryCommandScripts();
 
 // The function name must match the module folder name with '-' replaced by '_'.
 void Addmod_arena_rating_memoryScripts()
 {
     AddArenaRatingMemoryScripts();
+    AddArenaRatingMemoryCommandScripts();
 }
