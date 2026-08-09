@@ -93,8 +93,12 @@ keep the module in sync. Leave them alone unless you did.
   are real persisted arena teams, so they are covered too. In practice the effect is limited: that
   module destroys and recreates a player's 1v1 team whenever they make a new one, which forgets the
   rating along with the team.
-- **Solo queue.** Temporary teams built by the battleground queue and by
-  [mod-arena-3v3-solo-queue](https://github.com/azerothcore/mod-arena-3v3-solo-queue) are ignored.
+- **Solo queue.** [mod-arena-3v3-solo-queue](https://github.com/azerothcore/mod-arena-3v3-solo-queue)
+  gives every player a persistent one-man arena team, so those teams do go through this module. It
+  has no visible effect there: that module sets each member's personal rating to the team rating
+  after every match and overrides personal rating reads with the team rating, so there is no
+  independent value left to remember. The throwaway teams it builds for the match itself are
+  skipped, like the ones the battleground queue makes.
 - **mod-glicko2-mmr.** If that module is enabled it takes over personal rating updates, and the
   "starting rating" logic here no longer describes what a new member receives. The two have not been
   tested together.

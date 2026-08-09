@@ -72,6 +72,8 @@ namespace
 
         if (Player* player = ObjectAccessor::FindConnectedPlayer(pending.PlayerGuid))
         {
+            // mod-arena-3v3-solo-queue uses slot 4, which is out of range for the player field
+            // block, so this guard is load-bearing rather than defensive.
             uint8 const slot = team->GetSlot();
             if (slot < MAX_ARENA_SLOT)
                 player->SetArenaTeamInfoField(slot, ARENA_TEAM_PERSONAL_RATING, restored);
