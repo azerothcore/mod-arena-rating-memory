@@ -10,6 +10,7 @@
 #include "ArenaTeamMgr.h"
 #include "Chat.h"
 #include "Log.h"
+#include "ObjectAccessor.h"
 #include "Player.h"
 #include "ScriptMgr.h"
 #include <vector>
@@ -49,6 +50,18 @@ public:
             return;
 
         personalRating = restored;
+
+        // AddMember never sets ARENA_TEAM_PERSONAL_RATING itself: DelMember zeroed the whole slot on
+        // the way out, and the field is only refilled at login or after the next rated match. Left
+        // alone, a restored rating would not count towards rating-gated vendor items until then.
+        if (Player* player = ObjectAccessor::FindConnectedPlayer(playerGuid))
+        {
+            // mod-arena-3v3-solo-queue uses slot 4, which is out of range for the player field
+            // block, so this guard is load-bearing rather than defensive.
+            uint8 const slot = team->GetSlot();
+            if (slot < MAX_ARENA_SLOT)
+                player->SetArenaTeamInfoField(slot, ARENA_TEAM_PERSONAL_RATING, restored);
+        }
 
         LOG_DEBUG("module.arenaratingmemory", "Restored personal rating {} for {} in arena team {}",
             restored, playerGuid.ToString(), team->GetId());
