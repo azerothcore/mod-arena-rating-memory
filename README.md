@@ -24,8 +24,9 @@ The memory is per team, not per bracket. Two different 2v2 teams keep separate r
 PR = max(remembered rating, starting rating a brand new member would get)
 ```
 
-The second term is the core's own rule, so a returning member is never worse off than a stranger
-joining the same team. With default settings (arena season 6 or later,
+The second term is the value the core computed for that join, so a returning member is never worse
+off than a stranger joining the same team, and a server that changed what a new member starts with
+is followed automatically. With default settings (arena season 6 or later,
 `Arena.ArenaStartPersonalRating = 0`):
 
 | Remembered | Team rating | You get | Why |
@@ -68,8 +69,12 @@ that can drift out of sync.
 
 ## Requirements
 
-AzerothCore with the `ArenaScript` hooks `CanAddMember` and `CanSaveToDB`, and a characters database
-using InnoDB (the default).
+AzerothCore with the `ArenaScript` hooks `OnGetStartPersonalRating` and `CanSaveToDB`, and a
+characters database using InnoDB (the default).
+
+`OnGetStartPersonalRating` was added in
+[azerothcore-wotlk#27069](https://github.com/azerothcore/azerothcore-wotlk/pull/27069), so the module
+needs a core at least that recent.
 
 ## Installation
 
@@ -92,13 +97,7 @@ directory and edit it there. Defaults work out of the box.
 | Option | Default | Meaning |
 |---|---|---|
 | `ArenaRatingMemory.Enable` | `1` | Master switch |
-| `ArenaRatingMemory.FloorThreshold` | `1000` | Team rating at or above which the higher starting rating applies |
-| `ArenaRatingMemory.FloorAtOrAbove` | `1000` | Starting rating when the team rating is at or above the threshold |
-| `ArenaRatingMemory.FloorBelow` | `0` | Starting rating when the team rating is below the threshold |
-| `ArenaRatingMemory.Announce` | `1` | Tell players on login that the module is running |
-
-The three `Floor*` options exist so servers that changed what a new arena team member starts with can
-keep the module in sync. Leave them alone unless you did.
+| `ArenaRatingMemory.Announce` | `0` | Tell players on login that the module is running |
 
 Setting `ArenaRatingMemory.Enable = 0` makes the module completely inert: it stops recording as well
 as restoring. If you leave it off for a while, players will leave teams unobserved and the stored
@@ -144,9 +143,9 @@ Logger.module.arenaratingmemory=5,Console Server
   after every match and overrides personal rating reads with the team rating, so there is no
   independent value left to remember. The throwaway teams it builds for the match itself are
   skipped, like the ones the battleground queue makes.
-- **mod-glicko2-mmr.** If that module is enabled it takes over personal rating updates, and the
-  "starting rating" logic here no longer describes what a new member receives. The two have not been
-  tested together.
+- **mod-glicko2-mmr.** If that module is enabled it takes over personal rating updates after a
+  match, so the values recorded here are the ones it produces. The two have not been tested
+  together.
 - Because `mod_arena_rating_memory` references `arena_team`, InnoDB will refuse `DROP TABLE` and
   `TRUNCATE TABLE` on it while the module table exists. Drop `mod_arena_rating_memory` first if you
   ever need to do that by hand.

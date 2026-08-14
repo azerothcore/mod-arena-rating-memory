@@ -5,15 +5,11 @@
 #ifndef MOD_ARENA_RATING_MEMORY_CONFIG_H
 #define MOD_ARENA_RATING_MEMORY_CONFIG_H
 
-#include "ArenaRatingMemoryFormula.h"
 #include "ConfigValueCache.h"
 
 enum class ArenaRatingMemoryConfigId
 {
     ENABLED,
-    FLOOR_THRESHOLD,
-    FLOOR_AT_OR_ABOVE,
-    FLOOR_BELOW,
     ANNOUNCE,
 
     NUM_CONFIGS
@@ -28,7 +24,6 @@ public:
 
     [[nodiscard]] bool IsEnabled() const { return GetConfigValue<bool>(ArenaRatingMemoryConfigId::ENABLED); }
     [[nodiscard]] bool ShouldAnnounce() const { return GetConfigValue<bool>(ArenaRatingMemoryConfigId::ANNOUNCE); }
-    [[nodiscard]] ArenaRatingMemory::StartingRatingConfig GetStartingRatingConfig() const;
 };
 
 extern ArenaRatingMemoryConfig sArenaRatingMemoryConfig;

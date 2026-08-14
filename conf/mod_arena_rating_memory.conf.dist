@@ -8,6 +8,14 @@
 # mod-arena-rating-memory configuration
 ########################################
 #
+#    The rating a player receives when joining a team is:
+#
+#        PR = max(remembered rating, the rating the core would give a first time joiner)
+#
+#    so a returning member never ends up below someone joining that team for the first time. The
+#    second term comes from the core itself, including whatever Arena.ArenaStartPersonalRating in
+#    worldserver.conf is set to, so there is nothing to keep in sync here.
+#
 #    ArenaRatingMemory.Enable
 #        Description: Remember each player's personal rating per arena team, and restore it when
 #                     they rejoin a team they were in before.
@@ -18,43 +26,10 @@
 ArenaRatingMemory.Enable = 1
 
 #
-#    The rating a player receives when joining a team is:
-#
-#        PR = max(remembered rating, starting rating a brand new member would get)
-#
-#    so a returning member never ends up below someone joining that team for the first time.
-#    The starting rating is the core's own rule, with its hardcoded numbers exposed below:
-#
-#        Arena.ArenaStartPersonalRating (worldserver.conf) when greater than 0, otherwise
-#        1500 for arena seasons before season 6, otherwise
-#        ArenaRatingMemory.FloorAtOrAbove when the team rating is >= ArenaRatingMemory.FloorThreshold,
-#        ArenaRatingMemory.FloorBelow otherwise.
-#
-#    The defaults below reproduce unmodified AzerothCore behaviour. Change them only if your server
-#    already alters what a new arena team member starts with.
-#
-#    ArenaRatingMemory.FloorThreshold
-#        Description: Team rating at or above which the higher starting rating applies.
-#        Default:     1000
-#
-#    ArenaRatingMemory.FloorAtOrAbove
-#        Description: Starting rating when the team rating is at or above FloorThreshold.
-#        Default:     1000
-#
-#    ArenaRatingMemory.FloorBelow
-#        Description: Starting rating when the team rating is below FloorThreshold.
-#        Default:     0
-#
-
-ArenaRatingMemory.FloorThreshold = 1000
-ArenaRatingMemory.FloorAtOrAbove = 1000
-ArenaRatingMemory.FloorBelow = 0
-
-#
 #    ArenaRatingMemory.Announce
 #        Description: Announce to the player on login that this module is enabled.
-#        Default:     1 - Enabled
-#                     0 - Disabled
+#        Default:     0 - Disabled
+#                     1 - Enabled
 #
 
-ArenaRatingMemory.Announce = 1
+ArenaRatingMemory.Announce = 0
