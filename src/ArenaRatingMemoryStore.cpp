@@ -8,6 +8,9 @@
 #include "QueryResult.h"
 #include <sstream>
 
+// Raw query strings rather than the prepared statements the core guidelines ask for: the
+// CharacterDatabaseStatements enum is compile-time core state and a module cannot add entries for
+// its own table. Every value interpolated below is an integer, so there is no injection surface.
 namespace
 {
     // IGNORE skips arena_team_member rows whose team no longer exists. mod-1v1-arena leaves such

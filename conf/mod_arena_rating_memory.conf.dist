@@ -16,9 +16,15 @@
 #    second term comes from the core itself, including whatever Arena.ArenaStartPersonalRating in
 #    worldserver.conf is set to, so there is nothing to keep in sync here.
 #
+#    The week and season games and wins are remembered alongside the rating and restored as they
+#    were. The week counters of every remembered row are cleared when the core distributes arena
+#    points, so week games cannot be carried across a reset by sitting in another team.
+#
 #    ArenaRatingMemory.Enable
-#        Description: Remember each player's personal rating per arena team, and restore it when
-#                     they rejoin a team they were in before.
+#        Description: Remember each player's personal rating and played games per arena team, and
+#                     restore them when they rejoin a team they were in before. Turning this off
+#                     also stops the weekly clearing of the remembered week counters, so what is
+#                     already stored goes stale while it is off.
 #        Default:     1 - Enabled
 #                     0 - Disabled
 #

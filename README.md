@@ -65,8 +65,12 @@ floor protects the rating; it says nothing about your history.
 
 When the core distributes arena points and resets every team's week statistics, the module clears
 the remembered week games and wins of every row — players still in a team and players who left
-alike. Nobody can sit out the reset in another team and bring stale week games back. Season counters
-are never touched.
+alike. That is what stops week games being carried across a reset by sitting in another team.
+Season counters are never touched.
+
+The clearing is one database write issued at the end of the distribution, so a player who rejoins a
+team in the moment between the reset and that write can still bring the old week counters back. It
+is a narrow window during a world-announced event, not a guarantee to plan around.
 
 ### When memory is forgotten
 
@@ -132,8 +136,8 @@ player's live arena rating.
 
 | Command | Level | What it does |
 |---|---|---|
-| `.arena ratingmemory show [player]` | Game Master | Lists what is remembered for that character: team id and name, rating, week and season games/wins, last update |
-| `.arena ratingmemory clear [player] [teamId]` | Administrator | Deletes what is remembered for that character, or just the entry for a given team |
+| `.arena ratingmemory show [player]` | Game Master | Lists what is remembered: team, rating, games/wins, last update |
+| `.arena ratingmemory clear [player] [teamId]` | Administrator | Deletes it, all teams or just one |
 
 Both default to your current target or yourself when no player is given, and both work from the
 console.
