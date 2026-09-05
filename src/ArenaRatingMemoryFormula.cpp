@@ -3,9 +3,19 @@
  */
 
 #include "ArenaRatingMemoryFormula.h"
+#include "ArenaTeam.h"
 #include <algorithm>
 
 uint32 ArenaRatingMemory::ComputeJoinRating(uint32 rememberedRating, uint32 startingRating)
 {
     return std::max(rememberedRating, startingRating);
+}
+
+void ArenaRatingMemory::ApplyRemembered(ArenaTeamMember& member, RememberedStats const& remembered)
+{
+    member.PersonalRating = ComputeJoinRating(remembered.PersonalRating, member.PersonalRating);
+    member.WeekGames      = remembered.WeekGames;
+    member.WeekWins       = remembered.WeekWins;
+    member.SeasonGames    = remembered.SeasonGames;
+    member.SeasonWins     = remembered.SeasonWins;
 }

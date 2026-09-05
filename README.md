@@ -1,22 +1,24 @@
 # mod-arena-rating-memory
 
 An [AzerothCore](http://www.azerothcore.org) module that remembers each player's **personal arena
-rating per arena team**. Leave a team and rejoin it later, and you get your old rating back instead
-of starting over.
+rating and played games per arena team**. Leave a team and rejoin it later, and you get your old
+standing back instead of starting over.
 
 ## What it does
 
-Without this module, leaving an arena team throws your personal rating away. Rejoin and you start
-from the server default, exactly like someone who has never played for that team.
+Without this module, leaving an arena team throws your personal rating and your played games away.
+Rejoin and you start from the server default, exactly like someone who has never played for that
+team.
 
 With it:
 
-1. You have 1800 personal rating in **Team A**.
+1. You have 1800 personal rating and 6 games played this week in **Team A**.
 2. You leave Team A and join **Team B**, where you have never played — you start at the normal
    default there.
-3. You leave Team B and rejoin **Team A** — you are back at 1800.
+3. You leave Team B and rejoin **Team A** — you are back at 1800, with your 6 games still on the
+   board.
 
-The memory is per team, not per bracket. Two different 2v2 teams keep separate ratings for you.
+The memory is per team, not per bracket. Two different 2v2 teams keep separate records for you.
 
 ### The rating you get when joining
 
@@ -44,14 +46,27 @@ The memory is symmetric: a rating you dropped comes back with you as well as one
 this module a player can reset a bad personal rating by leaving a team and rejoining it, and that
 door is now closed.
 
-### What is not restored
+### What is restored
 
-Only the personal rating. Week and season games and wins still reset when you rejoin, exactly as
-they do without the module.
+The personal rating, plus the week and season games and wins you played for that team. The counters
+come back exactly as you left them, whichever way the rating comparison above went.
 
 That matters for arena points: the core only pays them to members who played at least 30% of the
-team's games that week, so leaving and rejoining mid-week can cost you the payout until you have
-played those games back.
+team's games that week. Play your weekly games for Team A, leave to help a friend get Team B to ten
+games, rejoin Team A before the payout, and you still get Team A's points — without the module you
+would have to play A's games all over again.
+
+Worked example. You are remembered in Team A with 500 rating, 6 games and 3 wins this week, 40 games
+and 22 wins this season. Team A is now rated 1200, so a stranger joining it would start at 1000. You
+rejoin: you get 1000 rating — the floor for that team — and your 6/3 and 40/22 back untouched. The
+floor protects the rating; it says nothing about your history.
+
+### Weekly flush
+
+When the core distributes arena points and resets every team's week statistics, the module clears
+the remembered week games and wins of every row — players still in a team and players who left
+alike. Nobody can sit out the reset in another team and bring stale week games back. Season counters
+are never touched.
 
 ### When memory is forgotten
 
@@ -69,11 +84,11 @@ that can drift out of sync.
 
 ## Requirements
 
-AzerothCore with the `ArenaScript` hooks `OnGetStartPersonalRating` and `CanSaveToDB`, and a
-characters database using InnoDB (the default).
+AzerothCore with the `ArenaScript` hooks `OnAddMember` and `CanSaveToDB`, the `GlobalScript` hook
+`OnArenaWeekReset`, and a characters database using InnoDB (the default).
 
-`OnGetStartPersonalRating` was added in
-[azerothcore-wotlk#27069](https://github.com/azerothcore/azerothcore-wotlk/pull/27069), so the module
+`OnAddMember` and `OnArenaWeekReset` were added in
+[azerothcore-wotlk#27512](https://github.com/azerothcore/azerothcore-wotlk/pull/27512), so the module
 needs a core at least that recent.
 
 ## Installation
@@ -100,8 +115,9 @@ directory and edit it there. Defaults work out of the box.
 | `ArenaRatingMemory.Announce` | `0` | Tell players on login that the module is running |
 
 Setting `ArenaRatingMemory.Enable = 0` makes the module completely inert: it stops recording as well
-as restoring. If you leave it off for a while, players will leave teams unobserved and the stored
-ratings will go stale. Clear the table before switching it back on:
+as restoring, and it stops clearing the week counters at the weekly flush. If you leave it off for a
+while, players will leave teams unobserved and the stored ratings and counters will go stale. Clear
+the table before switching it back on:
 
 ```sql
 DELETE FROM `mod_arena_rating_memory`;
@@ -116,14 +132,14 @@ player's live arena rating.
 
 | Command | Level | What it does |
 |---|---|---|
-| `.arena ratingmemory show [player]` | Game Master | Lists every remembered rating for that character, with team id, team name and when it was last updated |
-| `.arena ratingmemory clear [player] [teamId]` | Administrator | Deletes the remembered ratings for that character, or just the one for a given team |
+| `.arena ratingmemory show [player]` | Game Master | Lists what is remembered for that character: team id and name, rating, week and season games/wins, last update |
+| `.arena ratingmemory clear [player] [teamId]` | Administrator | Deletes what is remembered for that character, or just the entry for a given team |
 
 Both default to your current target or yourself when no player is given, and both work from the
 console.
 
-Clearing the memory of a player who is still in the team is temporary: their rating is recorded
-again after their next match. Clearing is meant for teams they have already left.
+Clearing the memory of a player who is still in the team is temporary: their rating and counters are
+recorded again after their next match. Clearing is meant for teams they have already left.
 
 For tracing a restore as it happens, enable the module's debug log in `worldserver.conf`:
 

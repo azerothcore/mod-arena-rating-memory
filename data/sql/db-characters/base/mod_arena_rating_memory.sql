@@ -1,4 +1,8 @@
--- Remembered personal arena rating, one row per (character, arena team).
+-- Remembered personal arena rating and played games, one row per (character, arena team).
+--
+-- The week counters are wiped for every row -- current members and departed ones alike -- when the
+-- core distributes arena points and resets the teams' week statistics (GlobalScript::OnArenaWeekReset),
+-- so nobody can carry week games across a reset by parking in another team. Season counters persist.
 --
 -- Both foreign keys are ON DELETE CASCADE on purpose: they are the only cleanup mechanism the
 -- module has. Every way an arena team dies ends in a DELETE on `arena_team` -- ArenaTeam::Disband()
@@ -14,6 +18,10 @@ CREATE TABLE IF NOT EXISTS `mod_arena_rating_memory` (
   `guid`           INT UNSIGNED      NOT NULL,
   `arenaTeamId`    INT UNSIGNED      NOT NULL,
   `personalRating` SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  `weekGames`      SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  `weekWins`       SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  `seasonGames`    SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+  `seasonWins`     SMALLINT UNSIGNED NOT NULL DEFAULT 0,
   `updatedAt`      TIMESTAMP         NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`guid`, `arenaTeamId`),
   KEY `fk_armem_team` (`arenaTeamId`),
