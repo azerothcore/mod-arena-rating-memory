@@ -47,8 +47,9 @@ public:
         handler->PSendSysMessage("Remembered arena ratings for {}:", target->GetName());
 
         for (ArenaRatingMemory::RememberedTeam const& entry : remembered)
-            handler->PSendSysMessage("  [{}] {} - rating {} (updated {})",
-                entry.ArenaTeamId, entry.TeamName, entry.PersonalRating, entry.UpdatedAt);
+            handler->PSendSysMessage("  [{}] {} - rating {}, week {}/{}, season {}/{} (updated {})",
+                entry.ArenaTeamId, entry.TeamName, entry.PersonalRating, entry.WeekGames, entry.WeekWins,
+                entry.SeasonGames, entry.SeasonWins, entry.UpdatedAt);
 
         return true;
     }

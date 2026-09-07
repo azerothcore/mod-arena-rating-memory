@@ -8,27 +8,35 @@
 #include "QueryResult.h"
 #include <sstream>
 
+// Raw query strings rather than the prepared statements the core guidelines ask for: the
+// CharacterDatabaseStatements enum is compile-time core state and a module cannot add entries for
+// its own table. Every value interpolated below is an integer, so there is no injection surface.
 namespace
 {
     // IGNORE skips arena_team_member rows whose team no longer exists. mod-1v1-arena leaves such
     // orphans behind (it deletes from arena_team without touching arena_team_member) and they would
     // otherwise abort the statement on a foreign key violation.
     constexpr char const* UPSERT_PREFIX =
-        "INSERT IGNORE INTO mod_arena_rating_memory (guid, arenaTeamId, personalRating) VALUES ";
+        "INSERT IGNORE INTO mod_arena_rating_memory "
+        "(guid, arenaTeamId, personalRating, weekGames, weekWins, seasonGames, seasonWins) VALUES ";
 
     constexpr char const* UPSERT_SUFFIX =
-        " ON DUPLICATE KEY UPDATE personalRating = VALUES(personalRating)";
+        " ON DUPLICATE KEY UPDATE personalRating = VALUES(personalRating), weekGames = VALUES(weekGames), "
+        "weekWins = VALUES(weekWins), seasonGames = VALUES(seasonGames), seasonWins = VALUES(seasonWins)";
 }
 
 void ArenaRatingMemory::SeedFromExistingTeams()
 {
     CharacterDatabase.Execute(
-        "INSERT IGNORE INTO mod_arena_rating_memory (guid, arenaTeamId, personalRating) "
-        "SELECT guid, arenaTeamId, personalRating FROM arena_team_member "
-        "ON DUPLICATE KEY UPDATE personalRating = VALUES(personalRating)");
+        "INSERT IGNORE INTO mod_arena_rating_memory "
+        "(guid, arenaTeamId, personalRating, weekGames, weekWins, seasonGames, seasonWins) "
+        "SELECT guid, arenaTeamId, personalRating, weekGames, weekWins, seasonGames, seasonWins "
+        "FROM arena_team_member "
+        "ON DUPLICATE KEY UPDATE personalRating = VALUES(personalRating), weekGames = VALUES(weekGames), "
+        "weekWins = VALUES(weekWins), seasonGames = VALUES(seasonGames), seasonWins = VALUES(seasonWins)");
 }
 
-void ArenaRatingMemory::RememberTeam(uint32 arenaTeamId, std::vector<MemberRating> const& members)
+void ArenaRatingMemory::RememberTeam(uint32 arenaTeamId, std::vector<MemberSnapshot> const& members)
 {
     if (members.empty())
         return;
@@ -39,29 +47,39 @@ void ArenaRatingMemory::RememberTeam(uint32 arenaTeamId, std::vector<MemberRatin
     query << UPSERT_PREFIX;
 
     bool first = true;
-    for (MemberRating const& member : members)
+    for (MemberSnapshot const& member : members)
     {
         if (!first)
             query << ',';
         first = false;
 
-        query << '(' << member.Guid.GetCounter() << ',' << arenaTeamId << ',' << member.PersonalRating << ')';
+        query << '(' << member.Guid.GetCounter() << ',' << arenaTeamId << ',' << member.PersonalRating
+              << ',' << member.WeekGames << ',' << member.WeekWins
+              << ',' << member.SeasonGames << ',' << member.SeasonWins << ')';
     }
 
     query << UPSERT_SUFFIX;
     CharacterDatabase.Execute(query.str());
 }
 
-Optional<uint32> ArenaRatingMemory::Recall(uint32 arenaTeamId, ObjectGuid playerGuid)
+Optional<ArenaRatingMemory::RememberedStats> ArenaRatingMemory::Recall(uint32 arenaTeamId, ObjectGuid playerGuid)
 {
     QueryResult result = CharacterDatabase.Query(
-        "SELECT personalRating FROM mod_arena_rating_memory WHERE guid = {} AND arenaTeamId = {}",
+        "SELECT personalRating, weekGames, weekWins, seasonGames, seasonWins "
+        "FROM mod_arena_rating_memory WHERE guid = {} AND arenaTeamId = {}",
         playerGuid.GetCounter(), arenaTeamId);
 
     if (!result)
         return std::nullopt;
 
-    return result->Fetch()[0].Get<uint32>();
+    Field* fields = result->Fetch();
+    return RememberedStats{
+        fields[0].Get<uint32>(),
+        fields[1].Get<uint32>(),
+        fields[2].Get<uint32>(),
+        fields[3].Get<uint32>(),
+        fields[4].Get<uint32>()
+    };
 }
 
 std::vector<ArenaRatingMemory::RememberedTeam> ArenaRatingMemory::RecallAll(ObjectGuid playerGuid)
@@ -70,7 +88,8 @@ std::vector<ArenaRatingMemory::RememberedTeam> ArenaRatingMemory::RecallAll(Obje
 
     // The foreign key guarantees the team still exists, so the join always matches.
     QueryResult result = CharacterDatabase.Query(
-        "SELECT m.arenaTeamId, t.name, m.personalRating, m.updatedAt "
+        "SELECT m.arenaTeamId, t.name, m.personalRating, m.weekGames, m.weekWins, m.seasonGames, m.seasonWins, "
+        "m.updatedAt "
         "FROM mod_arena_rating_memory m JOIN arena_team t ON t.arenaTeamId = m.arenaTeamId "
         "WHERE m.guid = {} ORDER BY t.name",
         playerGuid.GetCounter());
@@ -85,7 +104,11 @@ std::vector<ArenaRatingMemory::RememberedTeam> ArenaRatingMemory::RecallAll(Obje
             fields[0].Get<uint32>(),
             fields[1].Get<std::string>(),
             fields[2].Get<uint32>(),
-            fields[3].Get<std::string>()
+            fields[3].Get<uint32>(),
+            fields[4].Get<uint32>(),
+            fields[5].Get<uint32>(),
+            fields[6].Get<uint32>(),
+            fields[7].Get<std::string>()
         });
     } while (result->NextRow());
 
@@ -99,4 +122,9 @@ void ArenaRatingMemory::Forget(ObjectGuid playerGuid, Optional<uint32> arenaTeam
             playerGuid.GetCounter(), *arenaTeamId);
     else
         CharacterDatabase.Execute("DELETE FROM mod_arena_rating_memory WHERE guid = {}", playerGuid.GetCounter());
+}
+
+void ArenaRatingMemory::ForgetWeek()
+{
+    CharacterDatabase.Execute("UPDATE mod_arena_rating_memory SET weekGames = 0, weekWins = 0");
 }
